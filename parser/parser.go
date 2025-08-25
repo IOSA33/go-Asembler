@@ -36,79 +36,80 @@ func (p *Parser) HasMoreLines() bool {
 
 func (p *Parser) Advance() {
 	p.currentIndex++
-
 	line := p.lines[p.currentIndex]
-	if len(line) == 0 {
+
+	cleaned := cleanLine(line)
+	if cleaned == "" {
+		if p.HasMoreLines() {
+			p.Advance()
+		}
 		return
 	}
 
-	p.currentLine = strings.Fields(line)
-	for i, word := range p.currentLine {
-		if word == "/" {
-			p.currentLine = p.currentLine[:i]
-		}
-	}
+	// Giving for every word tokens
+	p.currentLine = strings.Fields(cleaned)
 
-	if p.currentLine[0] == "@" {
+	// Defying which command is it
+	firstToken := p.currentLine[0]
+
+	if strings.HasPrefix(firstToken, "@") {
 		p.commandType = A_COMMAND
-		p.symbol = strings.Join(p.currentLine[1:], "")
+		p.symbol = strings.TrimPrefix(firstToken, "@")
+		// If slice is more than one token
+		if len(p.currentLine) > 1 {
+			p.symbol += strings.Join(p.currentLine[1:], "")
+		}
+		return
 	}
 
 	if p.currentLine[0] == "(" && p.currentLine[len(p.currentLine)-1] == ")" {
 		p.commandType = L_COMMAND
-		p.symbol = strings.Join(p.currentLine[1:len(p.currentLine)-1], "")
+		p.symbol = strings.TrimSuffix(strings.TrimPrefix(firstToken, "("), ")")
+		return
 	} else {
+		// Logic for C_COMMAND
 		p.commandType = C_COMMAND
-		p.symbol = strings.Join(p.currentLine, " ")
 
-		// Checks if in the slice we have "="
-		hasEqual := false
-		equalIndex := -1
-		for i, token := range p.currentLine {
-			if token == "=" {
-				hasEqual = true
-				equalIndex = i
-				break
-			}
-		}
+		p.dest = ""
+		p.comp = ""
+		p.jump = ""
 
-		// Checks if in the slice we have ";"
-		hasSemicolon := false
-		semicolonIndex := -1
-		for i, token := range p.currentLine {
-			if token == ";" {
-				hasSemicolon = true
-				semicolonIndex = i
-				break
-			}
-		}
+		fullCommand := strings.Join(p.currentLine, "")
 
-		// If slice has "="
-		if hasEqual {
-			p.dest = strings.Join(p.currentLine[:equalIndex], " ")
+		// Ищем разделители
+		equalIndex := strings.Index(fullCommand, "=")
+		semicolonIndex := strings.Index(fullCommand, ";")
 
-			// If slice has "=" and ";"
-			if hasSemicolon {
-				p.comp = strings.Join(p.currentLine[equalIndex+1:semicolonIndex], " ")
-				p.jump = strings.Join(p.currentLine[semicolonIndex+1:], " ")
+		if equalIndex != -1 {
+			p.dest = fullCommand[:equalIndex]
+
+			if semicolonIndex != -1 {
+				// dest=comp;jump
+				p.comp = fullCommand[equalIndex+1 : semicolonIndex]
+				p.jump = fullCommand[semicolonIndex+1:]
 			} else {
-				// If slice has "=" and dont ";"
-				p.comp = strings.Join(p.currentLine[equalIndex+1:], " ")
-				p.jump = ""
+				// dest=comp
+				p.comp = fullCommand[equalIndex+1:]
 			}
-
-		} else if hasSemicolon {
-			// If slice doesnt have "=" but has ";"
-			p.dest = ""
-			p.comp = strings.Join(p.currentLine[:semicolonIndex], " ")
-			p.jump = strings.Join(p.currentLine[semicolonIndex+1:], " ")
+		} else if semicolonIndex != -1 {
+			// comp;jump
+			p.comp = fullCommand[:semicolonIndex]
+			p.jump = fullCommand[semicolonIndex+1:]
 		} else {
-			p.dest = ""
-			p.comp = strings.Join(p.currentLine, " ")
-			p.jump = ""
+			// comp
+			p.comp = fullCommand
 		}
 
 	}
+}
+
+func cleanLine(line string) string {
+	// deleting comment after "//"
+	if idx := strings.Index(line, "//"); idx != -1 {
+		line = line[:idx]
+	}
+	// Deleting spaces
+	return strings.TrimSpace(line)
 }
 
 func (p *Parser) CommandType() CommandType {
