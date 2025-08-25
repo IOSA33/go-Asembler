@@ -8,8 +8,8 @@ type CommandType int
 
 const (
 	A_COMMAND CommandType = iota // @value
-	C_COMMAND
-	L_COMMAND
+	C_COMMAND                    // dest=comp;jump
+	L_COMMAND                    // (label)
 )
 
 type Parser struct {
@@ -23,15 +23,15 @@ type Parser struct {
 	jump         string
 }
 
-func NewParse(lines []string) *Parser {
+func NewParser(lines []string) *Parser {
 	return &Parser{
 		lines:        lines,
 		currentIndex: -1,
 	}
 }
 
-func (p *Parser) hasMoreLines(lines []string) bool {
-	return p.currentIndex+1 < len(lines)
+func (p *Parser) HasMoreLines() bool {
+	return p.currentIndex+1 < len(p.lines)
 }
 
 func (p *Parser) Advance() {
@@ -61,30 +61,51 @@ func (p *Parser) Advance() {
 		p.commandType = C_COMMAND
 		p.symbol = strings.Join(p.currentLine, " ")
 
-		for i, word := range p.currentLine {
-			equal := strings.Index(word, "=")
-			doubleDot := strings.Index(word, ";")
-
-			if equal == -1 {
-				p.dest = ""
-				p.jump = strings.Join(p.currentLine[doubleDot+1:], " ")
-				p.comp = strings.Join(p.currentLine[:doubleDot], " ")
+		// Checks if in the slice we have "="
+		hasEqual := false
+		equalIndex := -1
+		for i, token := range p.currentLine {
+			if token == "=" {
+				hasEqual = true
+				equalIndex = i
+				break
 			}
+		}
 
-			if word == "=" {
-				p.dest = strings.Join(p.currentLine[:i], " ")
+		// Checks if in the slice we have ";"
+		hasSemicolon := false
+		semicolonIndex := -1
+		for i, token := range p.currentLine {
+			if token == ";" {
+				hasSemicolon = true
+				semicolonIndex = i
+				break
 			}
+		}
 
-			if doubleDot == -1 {
-				p.comp = strings.Join(p.currentLine[equal+1:], " ")
+		// If slice has "="
+		if hasEqual {
+			p.dest = strings.Join(p.currentLine[:equalIndex], " ")
+
+			// If slice has "=" and ";"
+			if hasSemicolon {
+				p.comp = strings.Join(p.currentLine[equalIndex+1:semicolonIndex], " ")
+				p.jump = strings.Join(p.currentLine[semicolonIndex+1:], " ")
+			} else {
+				// If slice has "=" and dont ";"
+				p.comp = strings.Join(p.currentLine[equalIndex+1:], " ")
 				p.jump = ""
-				return
 			}
 
-			if word == ";" {
-				p.comp = strings.Join(p.currentLine[equal+1:i], " ")
-				p.jump = strings.Join(p.currentLine[doubleDot+1:], " ")
-			}
+		} else if hasSemicolon {
+			// If slice doesnt have "=" but has ";"
+			p.dest = ""
+			p.comp = strings.Join(p.currentLine[:semicolonIndex], " ")
+			p.jump = strings.Join(p.currentLine[semicolonIndex+1:], " ")
+		} else {
+			p.dest = ""
+			p.comp = strings.Join(p.currentLine, " ")
+			p.jump = ""
 		}
 
 	}
@@ -92,6 +113,10 @@ func (p *Parser) Advance() {
 
 func (p *Parser) CommandType() CommandType {
 	return p.commandType
+}
+
+func (p *Parser) CurrentLine() []string {
+	return p.currentLine
 }
 
 func (p *Parser) Symbol() string {
