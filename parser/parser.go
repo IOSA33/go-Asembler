@@ -76,7 +76,7 @@ func (p *Parser) Advance() {
 
 		fullCommand := strings.Join(p.currentLine, "")
 
-		// Ищем разделители
+		// Defying Index of "=" and ";"
 		equalIndex := strings.Index(fullCommand, "=")
 		semicolonIndex := strings.Index(fullCommand, ";")
 
