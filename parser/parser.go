@@ -8,35 +8,35 @@ type CommandType int
 
 const (
 	A_COMMAND CommandType = iota // @value
-	C_COMMAND                    // dest=comp;jump
+	C_COMMAND                    // Dest=comp;jump
 	L_COMMAND                    // (label)
 )
 
 type Parser struct {
-	lines        []string
-	currentIndex int
-	currentLine  []string
-	commandType  CommandType
-	symbol       string
-	dest         string
-	comp         string
-	jump         string
+	Lines        []string
+	CurrentIndex int
+	CurrentLine  []string
+	CommandType  CommandType
+	Symbol       string
+	Dest         string
+	Comp         string
+	Jump         string
 }
 
 func NewParser(lines []string) *Parser {
 	return &Parser{
-		lines:        lines,
-		currentIndex: -1,
+		Lines:        lines,
+		CurrentIndex: -1,
 	}
 }
 
 func (p *Parser) HasMoreLines() bool {
-	return p.currentIndex+1 < len(p.lines)
+	return p.CurrentIndex+1 < len(p.Lines)
 }
 
 func (p *Parser) Advance() {
-	p.currentIndex++
-	line := p.lines[p.currentIndex]
+	p.CurrentIndex++
+	line := p.Lines[p.CurrentIndex]
 
 	cleaned := cleanLine(line)
 	if cleaned == "" {
@@ -47,57 +47,57 @@ func (p *Parser) Advance() {
 	}
 
 	// Giving for every word tokens
-	p.currentLine = strings.Fields(cleaned)
+	p.CurrentLine = strings.Fields(cleaned)
 
 	// Defying which command is it
-	firstToken := p.currentLine[0]
+	firstToken := p.CurrentLine[0]
 
 	if strings.HasPrefix(firstToken, "@") {
-		p.commandType = A_COMMAND
-		p.symbol = strings.TrimPrefix(firstToken, "@")
+		p.CommandType = A_COMMAND
+		p.Symbol = strings.TrimPrefix(firstToken, "@")
 		// If slice is more than one token
-		if len(p.currentLine) > 1 {
-			p.symbol += strings.Join(p.currentLine[1:], "")
+		if len(p.CurrentLine) > 1 {
+			p.Symbol += strings.Join(p.CurrentLine[1:], "")
 		}
 		return
 	}
 
-	if p.currentLine[0] == "(" && p.currentLine[len(p.currentLine)-1] == ")" {
-		p.commandType = L_COMMAND
-		p.symbol = strings.TrimSuffix(strings.TrimPrefix(firstToken, "("), ")")
+	if p.CurrentLine[0] == "(" && p.CurrentLine[len(p.CurrentLine)-1] == ")" {
+		p.CommandType = L_COMMAND
+		p.Symbol = strings.TrimSuffix(strings.TrimPrefix(firstToken, "("), ")")
 		return
 	} else {
 		// Logic for C_COMMAND
-		p.commandType = C_COMMAND
+		p.CommandType = C_COMMAND
 
-		p.dest = ""
-		p.comp = ""
-		p.jump = ""
+		p.Dest = ""
+		p.Comp = ""
+		p.Jump = ""
 
-		fullCommand := strings.Join(p.currentLine, "")
+		fullCommand := strings.Join(p.CurrentLine, "")
 
 		// Defying Index of "=" and ";"
 		equalIndex := strings.Index(fullCommand, "=")
 		semicolonIndex := strings.Index(fullCommand, ";")
 
 		if equalIndex != -1 {
-			p.dest = fullCommand[:equalIndex]
+			p.Dest = fullCommand[:equalIndex]
 
 			if semicolonIndex != -1 {
-				// dest=comp;jump
-				p.comp = fullCommand[equalIndex+1 : semicolonIndex]
-				p.jump = fullCommand[semicolonIndex+1:]
+				// Dest=comp;jump
+				p.Comp = fullCommand[equalIndex+1 : semicolonIndex]
+				p.Jump = fullCommand[semicolonIndex+1:]
 			} else {
-				// dest=comp
-				p.comp = fullCommand[equalIndex+1:]
+				// Dest=comp
+				p.Comp = fullCommand[equalIndex+1:]
 			}
 		} else if semicolonIndex != -1 {
 			// comp;jump
-			p.comp = fullCommand[:semicolonIndex]
-			p.jump = fullCommand[semicolonIndex+1:]
+			p.Comp = fullCommand[:semicolonIndex]
+			p.Jump = fullCommand[semicolonIndex+1:]
 		} else {
 			// comp
-			p.comp = fullCommand
+			p.Comp = fullCommand
 		}
 
 	}
@@ -110,28 +110,4 @@ func cleanLine(line string) string {
 	}
 	// Deleting spaces
 	return strings.TrimSpace(line)
-}
-
-func (p *Parser) CommandType() CommandType {
-	return p.commandType
-}
-
-func (p *Parser) CurrentLine() []string {
-	return p.currentLine
-}
-
-func (p *Parser) Symbol() string {
-	return p.symbol
-}
-
-func (p *Parser) Dest() string {
-	return p.dest
-}
-
-func (p *Parser) Comp() string {
-	return p.comp
-}
-
-func (p *Parser) Jump() string {
-	return p.jump
 }
