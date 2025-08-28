@@ -1,6 +1,7 @@
 package main
 
 import (
+	"assembler/code"
 	"assembler/parser"
 	"fmt"
 	"os"
@@ -9,7 +10,7 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run main.go hello.asm")
+		fmt.Println("Usage: go run cmd/main.go hello.asm")
 		return
 	}
 
@@ -26,6 +27,14 @@ func main() {
 	for parser_test.HasMoreLines() {
 		parser_test.Advance()
 
+		dest := parser_test.Dest
+		comp := parser_test.Comp
+		jump := parser_test.Jump
+
+		destCode := code.Dest(dest)
+		compCode := code.Comp(comp)
+		jumpCode := code.Jump(jump)
+
 		fmt.Printf("Input line: %s\n", parser_test.CurrentLine)
 		fmt.Printf("CommandType: %d\n", parser_test.CommandType)
 
@@ -34,7 +43,13 @@ func main() {
 			fmt.Printf("Symbol: %s\n", parser_test.Symbol)
 		case parser.C_COMMAND:
 			fmt.Printf("Dest: '%s', Comp: '%s', Jump: '%s'\n", parser_test.Dest, parser_test.Comp, parser_test.Jump)
+			fmt.Printf("CompCode: %s\n", compCode)
+			fmt.Printf("DestCode: %s\n", destCode)
+			fmt.Printf("JumpCode: %s\n", jumpCode)
+			binaryCommand := "111" + compCode + destCode + jumpCode
+			fmt.Printf("Binary command: %s\n", binaryCommand)
 		}
 		fmt.Println("-----")
 	}
+
 }

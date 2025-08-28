@@ -40,10 +40,10 @@ func (p *Parser) Advance() {
 
 	cleaned := cleanLine(line)
 	if cleaned == "" {
-		if p.HasMoreLines() {
-			p.Advance()
-		}
-		return
+			if p.HasMoreLines() {
+				p.Advance()
+			}
+			return
 	}
 
 	// Giving for every word tokens
