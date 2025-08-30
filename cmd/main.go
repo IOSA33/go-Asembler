@@ -17,6 +17,7 @@ func main() {
 	}
 
 	file, err := os.ReadFile(os.Args[1])
+	// This is for debug mode
 	// file, err := os.ReadFile("hello.asm")
 	if err != nil {
 		fmt.Printf("Error: %d", err)
