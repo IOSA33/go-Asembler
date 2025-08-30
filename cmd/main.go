@@ -17,6 +17,7 @@ func main() {
 	}
 
 	file, err := os.ReadFile(os.Args[1])
+	// file, err := os.ReadFile("hello.asm")
 	if err != nil {
 		fmt.Printf("Error: %d", err)
 		return
@@ -27,7 +28,10 @@ func main() {
 	parserTest := parser.NewParser(lines)
 	symtable := symboltable.NewSymbolTable()
 
-	f, err := os.Create("test.hack")
+	fileName := os.Args[1]
+
+	f, err := os.Create(fileName + ".hack")
+	//f, err := os.Create("hello.hack")
 	if err != nil {
 		fmt.Printf("Error: %d", err)
 	}
@@ -44,7 +48,7 @@ func main() {
 			programCounter++
 		case parser.L_COMMAND:
 			fmt.Printf("COMMAND: %v\n", parserTest.CommandType)
-			err := symtable.AddEntry(parserTest.Symbol, programCounter)
+			_, err := symtable.AddEntry(parserTest.Symbol, programCounter)
 			check(err)
 		}
 	}
@@ -79,11 +83,12 @@ func main() {
 				check(err)
 				fmt.Println("---------- Converted")
 			} else {
+				// If it contains in
 				if ok := symtable.Contains(parserTest2.Symbol); ok {
 					fmt.Println("---------- Converted 2")
 					addressA := symtable.GetAddress(parserTest2.Symbol)
 					fmt.Println(addressA)
-					binaryCommandA1 := fmt.Sprintf("%016b", typeInt)
+					binaryCommandA1 := fmt.Sprintf("%016b", addressA)
 					fmt.Println(binaryCommandA1)
 
 					_, err := f.WriteString(binaryCommandA1 + "\n")
@@ -91,11 +96,12 @@ func main() {
 
 					fmt.Println("---------- Converted 2")
 				} else {
+					// If it doesn't contain in symbol table we add the entry to map
 					fmt.Println("---------- Converted 3")
-					err := symtable.AddEntry(parserTest2.Symbol, programCounterA)
+					valueAddress, err := symtable.AddEntry(parserTest2.Symbol, programCounterA)
 					check(err)
 
-					binaryCommandA2 := fmt.Sprintf("%016b", typeInt)
+					binaryCommandA2 := fmt.Sprintf("%016b", valueAddress)
 					fmt.Println(binaryCommandA2)
 					_, err = f.WriteString(binaryCommandA2 + "\n")
 					check(err)
@@ -118,7 +124,7 @@ func main() {
 			_, err := f.WriteString(binaryCommand + "\n")
 			check(err)
 		case parser.L_COMMAND:
-			continue
+			fmt.Println("L_COMMAND")
 		}
 		fmt.Println("------------------------------ ForLoop")
 	}

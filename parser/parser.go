@@ -40,10 +40,10 @@ func (p *Parser) Advance() {
 
 	cleaned := cleanLine(line)
 	if cleaned == "" {
-			if p.HasMoreLines() {
-				p.Advance()
-			}
-			return
+		if p.HasMoreLines() {
+			p.Advance()
+		}
+		return
 	}
 
 	// Giving for every word tokens
@@ -62,7 +62,9 @@ func (p *Parser) Advance() {
 		return
 	}
 
-	if p.CurrentLine[0] == "(" && p.CurrentLine[len(p.CurrentLine)-1] == ")" {
+	// Check for first rune of the word
+	word := p.CurrentLine[0]
+	if []rune(word)[0] == '(' && []rune(word)[len(word)-1] == ')' {
 		p.CommandType = L_COMMAND
 		p.Symbol = strings.TrimSuffix(strings.TrimPrefix(firstToken, "("), ")")
 		return
