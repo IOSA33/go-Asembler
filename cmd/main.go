@@ -12,13 +12,11 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run cmd/main.go hello.asm")
+		fmt.Println("Usage: go run cmd/main.go myfile.asm")
 		return
 	}
 
 	file, err := os.ReadFile(os.Args[1])
-	// This is for debug mode
-	// file, err := os.ReadFile("hello.asm")
 	if err != nil {
 		fmt.Printf("Error: %d", err)
 		return
@@ -27,12 +25,11 @@ func main() {
 	lines := strings.Split(string(file), "\n")
 
 	parserTest := parser.NewParser(lines)
-	symtable := symboltable.NewSymbolTable()
+	symTable := symboltable.NewSymbolTable()
 
 	fileName := os.Args[1]
 
 	f, err := os.Create(fileName + ".hack")
-	//f, err := os.Create("hello.hack")
 	if err != nil {
 		fmt.Printf("Error: %d", err)
 	}
@@ -49,7 +46,7 @@ func main() {
 			programCounter++
 		case parser.L_COMMAND:
 			fmt.Printf("COMMAND: %v\n", parserTest.CommandType)
-			_, err := symtable.AddEntry(parserTest.Symbol, programCounter)
+			_, err := symTable.AddEntry(parserTest.Symbol, programCounter)
 			check(err)
 		}
 	}
@@ -85,9 +82,9 @@ func main() {
 				fmt.Println("---------- Converted")
 			} else {
 				// If it contains in
-				if ok := symtable.Contains(parserTest2.Symbol); ok {
+				if ok := symTable.Contains(parserTest2.Symbol); ok {
 					fmt.Println("---------- Converted 2")
-					addressA := symtable.GetAddress(parserTest2.Symbol)
+					addressA := symTable.GetAddress(parserTest2.Symbol)
 					fmt.Println(addressA)
 					binaryCommandA1 := fmt.Sprintf("%016b", addressA)
 					fmt.Println(binaryCommandA1)
@@ -99,7 +96,7 @@ func main() {
 				} else {
 					// If it doesn't contain in symbol table we add the entry to map
 					fmt.Println("---------- Converted 3")
-					valueAddress, err := symtable.AddEntry(parserTest2.Symbol, programCounterA)
+					valueAddress, err := symTable.AddEntry(parserTest2.Symbol, programCounterA)
 					check(err)
 
 					binaryCommandA2 := fmt.Sprintf("%016b", valueAddress)
